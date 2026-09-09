@@ -54,7 +54,7 @@ int **criarMatriz(int linhas, int colunas) {
         matriz[i] = (int *)malloc(colunas * sizeof(int));
         for (int j = 0; j < colunas; j++) {
             // preenche com 0 ou 1 aleatoriamente (dois "tipos" de célula)
-            matriz[i][j] = GetRandomValue(0, 1);
+           matriz[i][j] = 0;
         }
     }
     return matriz;
@@ -73,7 +73,7 @@ void desenharMatriz(int **matriz, int linhas, int colunas) {
     for (int i = 0; i < linhas; i++) {
         for (int j = 0; j < colunas; j++) {
             Color cor = (matriz[i][j] == 1) ? (Color){20, 40, 70, 255}
-                                             : (Color){15, 30, 55, 255};
+                                             : (Color){15, 80, 55, 255};
             DrawRectangle(j * TAM_CELULA, i * TAM_CELULA,
                            TAM_CELULA - 2, TAM_CELULA - 2, cor);
         }
@@ -104,9 +104,18 @@ Bola *criarBolas(int quantidade) {
 
 /* atualiza a posição de UMA bola: recebe um PONTEIRO para a struct,
  * então as alterações afetam diretamente o vetor original (sem cópia) */
-void atualizarBola(Bola *b) {
+void atualizarBola(Bola *b, int linhas, int colunas, int **grade, int *celulasvisitadas) {
     b->pos.x += b->vel.x;
     b->pos.y += b->vel.y;
+      int coluna = (int)(b->pos.x / TAM_CELULA);
+    int linha = (int)(b->pos.y / TAM_CELULA);
+    if(linha >= 0 && linha < linhas && coluna >= 0 && coluna < colunas){
+        if(grade[linha][coluna] == 0){
+            grade[linha][coluna]++;
+           (*celulasvisitadas)++;
+
+        }
+    }
 
     // rebate nas bordas
     if (b->pos.x - b->raio < 0 || b->pos.x + b->raio > LARGURA_JANELA)
@@ -121,10 +130,10 @@ int main(void) {
     InitWindow(LARGURA_JANELA, ALTURA_JANELA,
                "Ponteiros e Alocacao Dinamica - raylib");
     SetTargetFPS(60);
-
-    int linhas   = ALTURA_JANELA / TAM_CELULA;
-    int colunas  = LARGURA_JANELA / TAM_CELULA;
-    int **grade  = criarMatriz(linhas, colunas);   // matriz dinâmica
+    int celulasvisitadas = 0;
+    int linhas = ALTURA_JANELA / TAM_CELULA;
+    int colunas = LARGURA_JANELA / TAM_CELULA;
+    int **grade = criarMatriz(linhas, colunas);   // matriz dinâmica
     int quantidadeBolas = 12;
     Bola *bolas = criarBolas(quantidadeBolas);
     
@@ -135,7 +144,7 @@ int main(void) {
         // percorre o vetor usando aritmética de ponteiros:
         // (bolas + i) aponta para o i-ésimo elemento do vetor
         for (int i = 0; i < quantidadeBolas; i++) {
-            atualizarBola(bolas + i);
+            atualizarBola(bolas + i, linhas, colunas, grade, &celulasvisitadas);
         }
 
         BeginDrawing();
@@ -150,6 +159,8 @@ int main(void) {
             DrawText("Matriz (int**) e vetor de structs (Bola*) alocados com malloc",
                      10, 10, 18, WHITE);
             DrawText("Pressione ESC para sair", 10, ALTURA_JANELA - 25, 16, WHITE);
+            DrawText(TextFormat("Celulas visitadas: %d", celulasvisitadas),
+         10, ALTURA_JANELA - 40, 16, WHITE);
                 if(IsKeyPressed(KEY_SPACE)){
                     int novaquantidade = quantidadeBolas +1;
                     Bola *temporario = realloc(bolas, novaquantidade * sizeof(Bola));
@@ -163,7 +174,7 @@ int main(void) {
                     bolas[novaquantidade - 1].vel =(Vector2){
                     GetRandomValue(-4, 4),
                     GetRandomValue(-4, 4)
-                    
+
                     };
                     bolas[novaquantidade - 1].raio = (float)GetRandomValue(10, 25);
                     bolas[novaquantidade - 1].cor = (Color){ GetRandomValue(100,255), GetRandomValue(100,255),
