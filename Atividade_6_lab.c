@@ -25,11 +25,11 @@ typedef union {
 } ExtraEntidade;
 
 typedef struct {
-    TipoEntidade  tipo;
-    Vector2       pos;
-    float         raio;
-    int           vida;
-    Color         cor;
+    TipoEntidade tipo;
+    Vector2 pos;
+    float raio;
+    int vida;
+    Color cor;
     ExtraEntidade extra;
 } Entidade;
 
@@ -38,16 +38,18 @@ int totalEntidades = 0;
 
 Entidade *criarEntidade(TipoEntidade tipo, Vector2 pos) {
     Entidade *e = (Entidade *)malloc(sizeof(Entidade));
-    if (e == NULL) return NULL;
+
+    if (e == NULL)
+        return NULL;
 
     e->tipo = tipo;
-
     e->pos = pos;
 
     e->raio = (tipo == ENTIDADE_JOGADOR) ? RAIO_JOGADOR
              : (tipo == ENTIDADE_INIMIGO) ? 15.0f : 8.0f;
 
     switch (tipo) {
+
         case ENTIDADE_JOGADOR:
             e->vida = 100;
             e->cor = BLUE;
@@ -70,14 +72,18 @@ Entidade *criarEntidade(TipoEntidade tipo, Vector2 pos) {
 }
 
 void adicionarEntidade(Entidade *e) {
-    if (e == NULL || totalEntidades >= MAX_ENTIDADES) return;
+
+    if (e == NULL || totalEntidades >= MAX_ENTIDADES)
+        return;
 
     vetorEntidades[totalEntidades] = e;
     totalEntidades++;
 }
 
 void removerEntidade(int indice) {
-    if (indice < 0 || indice >= totalEntidades) return;
+
+    if (indice < 0 || indice >= totalEntidades)
+        return;
 
     free(vetorEntidades[indice]);
 
@@ -87,6 +93,7 @@ void removerEntidade(int indice) {
 }
 
 void liberarTodasEntidades(void) {
+
     for (int i = 0; i < totalEntidades; i++) {
         free(vetorEntidades[i]);
     }
@@ -95,6 +102,7 @@ void liberarTodasEntidades(void) {
 }
 
 bool colidiu(Entidade *a, Entidade *b) {
+
     float dx = a->pos.x - b->pos.x;
     float dy = a->pos.y - b->pos.y;
 
@@ -104,9 +112,11 @@ bool colidiu(Entidade *a, Entidade *b) {
 }
 
 void desenharEntidade(Entidade *e) {
+
     DrawCircleV(e->pos, e->raio, e->cor);
 
     if (e->tipo == ENTIDADE_INIMIGO) {
+
         DrawText(
             TextFormat("%d", e->vida),
             e->pos.x - 8,
@@ -117,32 +127,24 @@ void desenharEntidade(Entidade *e) {
     }
 }
 
-/* ---------------------------------------------------------
-   ARQUIVO DE TEXTO
-   Agora salva: nome + pontuação
-   Exemplo:
-   Joao 150
-   Maria 200
---------------------------------------------------------- */
-
 void salvarPlacarTexto(char nomeJogador[], int pontuacao) {
 
     FILE *arquivo = fopen(ARQUIVO_PLACAR, "a");
 
-    if (arquivo == NULL) return;
+    if (arquivo == NULL)
+        return;
 
     fprintf(arquivo, "%s %d\n", nomeJogador, pontuacao);
 
     fclose(arquivo);
 }
 
-/* Lê nome e pontuação e encontra a maior pontuação */
-
 int lerMelhorPontuacao(void) {
 
     FILE *arquivo = fopen(ARQUIVO_PLACAR, "r");
 
-    if (arquivo == NULL) return 0;
+    if (arquivo == NULL)
+        return 0;
 
     char nomeLido[16];
     int valor = 0;
@@ -160,15 +162,12 @@ int lerMelhorPontuacao(void) {
     return melhor;
 }
 
-/* ---------------------------------------------------------
-   ARQUIVO BINÁRIO
---------------------------------------------------------- */
-
 bool salvarJogoBinario(void) {
 
     FILE *arquivo = fopen(ARQUIVO_SAVE, "wb");
 
-    if (arquivo == NULL) return false;
+    if (arquivo == NULL)
+        return false;
 
     fwrite(&totalEntidades, sizeof(int), 1, arquivo);
 
@@ -191,7 +190,8 @@ bool carregarJogoBinario(void) {
 
     FILE *arquivo = fopen(ARQUIVO_SAVE, "rb");
 
-    if (arquivo == NULL) return false;
+    if (arquivo == NULL)
+        return false;
 
     int totalSalvo = 0;
 
@@ -207,6 +207,11 @@ bool carregarJogoBinario(void) {
     for (int i = 0; i < totalSalvo; i++) {
 
         Entidade *e = (Entidade *)malloc(sizeof(Entidade));
+
+        if (e == NULL) {
+            fclose(arquivo);
+            return false;
+        }
 
         if (fread(e, sizeof(Entidade), 1, arquivo) != 1) {
 
@@ -225,15 +230,8 @@ bool carregarJogoBinario(void) {
 
 int main(void) {
 
-    /*
-     * Nome do jogador.
-     * O limite é de 15 caracteres + '\0'.
-     */
     char nomeJogador[16];
 
-    /*
-     * Pede o nome antes de iniciar a janela.
-     */
     printf("Digite o nome do jogador: ");
     scanf("%15s", nomeJogador);
 
@@ -282,11 +280,9 @@ int main(void) {
     }
 
     int pontuacao = 0;
-
     int melhorPontuacao = lerMelhorPontuacao();
 
     char mensagem[64] = "";
-
     float tempoMensagem = 0.0f;
 
     while (!WindowShouldClose()) {
@@ -329,10 +325,6 @@ int main(void) {
             }
         }
 
-        /*
-         * F5 salva:
-         * nome + pontuação
-         */
         if (IsKeyPressed(KEY_F5)) {
 
             salvarPlacarTexto(nomeJogador, pontuacao);
@@ -348,9 +340,6 @@ int main(void) {
             tempoMensagem = 2.0f;
         }
 
-        /*
-         * F6 salva o jogo em binário
-         */
         if (IsKeyPressed(KEY_F6)) {
 
             bool ok = salvarJogoBinario();
@@ -365,9 +354,6 @@ int main(void) {
             tempoMensagem = 2.0f;
         }
 
-        /*
-         * F9 carrega o jogo
-         */
         if (IsKeyPressed(KEY_F9)) {
 
             bool ok = carregarJogoBinario();
@@ -381,6 +367,28 @@ int main(void) {
                     ? "Jogo carregado de save.bin!"
                     : "Nenhum save.bin encontrado!"
             );
+
+            tempoMensagem = 2.0f;
+        }
+
+        if (IsKeyPressed(KEY_DELETE)) {
+
+            int resultado = remove(ARQUIVO_SAVE);
+
+            if (resultado == 0) {
+
+                TextCopy(
+                    mensagem,
+                    "Save apagado com sucesso!"
+                );
+
+            } else {
+
+                TextCopy(
+                    mensagem,
+                    "Nenhum save encontrado"
+                );
+            }
 
             tempoMensagem = 2.0f;
         }
@@ -412,7 +420,7 @@ int main(void) {
         );
 
         DrawText(
-            "F5 salva placar | F6 salva jogo | F9 carrega jogo",
+            "F5 salva placar | F6 salva jogo | F9 carrega jogo | DELETE apaga save",
             10,
             34,
             18,
